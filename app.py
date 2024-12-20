@@ -51,9 +51,6 @@ def whatsapp_reply():
 
     resp.message(message_to_send)
 
-  # Write record to dynamodb
-  interactions.add_interaction(phone, timestamp, name, received_message, message_to_send)
-
 
   return str(resp)
 
