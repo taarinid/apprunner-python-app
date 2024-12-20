@@ -13,7 +13,7 @@ dynamodb = boto3.resource('dynamodb',region_name=os.environ['AWS_REGION'])
 table = os.environ['DDB_TABLE']
 interactions = Interactions(dynamodb, logger=app.logger)
 
-if not interactions.exist(table):
+if not interactions.exists(table):
   interactions.create_table(table)
 
 #Home Page
