@@ -3,10 +3,18 @@
 from flask import Flask, jsonify, request, render_template
 import boto3
 import os
+from interactions import Interactions
 from twilio.twiml.messaging_response import MessagingResponse
+from datetime import datetime, timezone
 
 app = Flask(__name__)
 
+dynamodb = boto3.resource('dynamodb',region_name=os.environ['AWS_REGION'])
+table = os.environ['DDB_TABLE']
+interactions = Interactions(dynamodb, logger=app.logger)
+
+if not interactions.exist(table):
+  interactions.create_table(table)
 
 #Home Page
 @app.route('/')
@@ -17,6 +25,9 @@ def home():
 # POST /api/whatsapp
 @app.route('/api/whatsapp', methods=['POST'])
 def whatsapp_reply():
+  #timestamap
+  timestamp = datetime.strftime(datetime.now(timezone.utc), '%m-%d-%y %H:%M:%S UTC')
+
   # Attempt to extract the phone number
   try:
     phone = request.values.get('From', None)
@@ -28,18 +39,30 @@ def whatsapp_reply():
     received_message = request.values.get('Body', None)
   except:
     received_message = None
+  
+  #attempting to extract the username
+  try:
+    name = request.values.get("ProfileName", None)
+  except:
+    name = None
+
+  if name is None:
+    app.logger.error(f"name could not be parsed for {phone} at {timestamp}")
 
   resp = MessagingResponse()
 
-  app.logger.error(f"phone={phone}, received_message={received_message}")
 
   if phone is not None and received_message is not None:
+    previous_interaction_records = interactions.query_interactions(phone)
+    previous_interaction_count = len(previous_interaction_records) 
+    app.logger.error(f"previous interaction records = {previous_interaction_records}")
     # Create a message to send based on combination of message received and the count of interactions
-    message_to_send = f'Hi there, you sent the message "{received_message}"'
-
+    message_to_send = f"Hi there, you sent the message {received_message} The previous interaction count = {previous_interaction_count}"
     # Incorporate message into response
     resp.message(message_to_send)
-
+    mentor_type = ''
+    interactions.add_interaction(phone, timestamp, received_message, message_to_send, mentor_type, name)
+  
   else:
     name = ""
     if phone is None and received_message is not None:
