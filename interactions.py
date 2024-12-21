@@ -307,20 +307,20 @@ class Interactions:
     #         raise
 
 
-    # def delete_table(self):
-    #     """
-    #     Deletes the table.
-    #     """
-    #     try:
-    #         self.table.delete()
-    #         self.table = None
-    #     except ClientError as err:
-    #         logger.error(
-    #             "Couldn't delete table. Here's why: %s: %s",
-    #             err.response["Error"]["Code"],
-    #             err.response["Error"]["Message"],
-    #         )
-    #         raise
+    def delete_table(self):
+        """
+        Deletes the table.
+        """
+        try:
+            self.table.delete()
+            self.table = None
+        except ClientError as err:
+            logger.error(
+                "Couldn't delete table. Here's why: %s: %s",
+                err.response["Error"]["Code"],
+                err.response["Error"]["Message"],
+            )
+            raise
 
 
 
