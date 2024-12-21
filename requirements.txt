@@ -4,3 +4,4 @@
 flask
 boto3
 twilio
+openai==0.28.1
