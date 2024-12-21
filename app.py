@@ -47,7 +47,15 @@ def generate_prompt(mentor_type, message, previous_interaction_count):
         "Your response must be specific, detailed, actionable, and practical, ensuring a sustainable path to success in the local market."
       )
     else:
-      prompt = f"multiply 1 times by {previous_interaction_count}"
+      prompt = (
+        f"Understand and answer the question given by '{message}'. You are a highly integrated local entrepreneur mentor based in Kampala. \n" 
+        "You have successfully started and managed businesses in this area for many years. \n"
+        "You are well-connected, deeply understand the local market, and focus on practical solutions. \n"
+        "You believe in step-by-step approaches to entrepreneurship. Now, you are providing solutions to the question raised.\n"
+        "You guide entrepreneurs to build sustainable businesses by leveraging local resources, customer insights, and efficient planning.\n"
+      "You are continuing a detailed mentoring conversation with the user. \n"
+      "Your goal is to answer the question by providing specific, actionable, relevant advice to the questions/concerns pointed out. \n"
+      )
 
   elif mentor_type == "refugee mentor":
     if previous_interaction_count == 1:
@@ -70,8 +78,15 @@ def generate_prompt(mentor_type, message, previous_interaction_count):
         "Your response must be highly motivational, empathetic, specific, detailed, and focused on leveraging creativity and resilience to succeed."
         )
     else:
-      prompt = f"multiply 2 times by {previous_interaction_count}"
-
+      prompt = (
+      f"Understand and answer the question given by '{message}'. You are a refugee entrepreneur mentor who overcame significant challenges to build a thriving business in Kampala. \n"
+        "You understand the difficulties faced by refugees, including limited resources, unfamiliar markets, and social barriers, \n"
+        "but you firmly believe in their potential. \n"
+        "Your advice is empathetic, motivational, and aimed at fostering creativity, resilience, and ambition. "
+        "You encourage entrepreneurs to embrace bold, innovative approaches while finding ways to overcome constraints.\n\n"
+      "You are continuing a detailed mentoring conversation with the user. \n"
+      "Your goal is to answer the question by providing specific, actionable, relevant advice to the questions/concerns pointed out. \n"
+      )
   else:
     if previous_interaction_count == 1:
       prompt = (
@@ -88,7 +103,11 @@ def generate_prompt(mentor_type, message, previous_interaction_count):
         "Your response should deliver clear, concise, and practical, specific, detailed advice to support entrepreneurial success."
         )
     else:
-      prompt = f"multiply 3 times by {previous_interaction_count}"
+      prompt = (
+        f"Understand and answer the question given by '{message}'."
+      "You are continuing a detailed mentoring conversation with the user. \n"
+      "Your goal is to answer the question by providing specific, actionable, relevant advice to the questions/concerns pointed out. \n"
+      )
 
   return prompt
 
@@ -177,6 +196,10 @@ def whatsapp_reply():
 
         # Generate response
         message_to_send = get_chat_response(prompt, received_message)
+        if previous_interaction_count == 1: 
+          message_to_send += "Please feel free to ask one more follow up question."
+        else:
+          message_to_send += "Thank you for using this chatbot service! Our interaction is now complete."
         app.logger.error(f"message_to_send={message_to_send}")
 
       # Send whatsapp return message in chunks
