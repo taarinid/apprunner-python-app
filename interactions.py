@@ -315,7 +315,7 @@ class Interactions:
             self.table.delete()
             self.table = None
         except ClientError as err:
-            logger.error(
+            self.logger.error(
                 "Couldn't delete table. Here's why: %s: %s",
                 err.response["Error"]["Code"],
                 err.response["Error"]["Message"],
