@@ -24,8 +24,6 @@ twilio_client = Client(os.environ["TWILIO_ACCOUNT_SID"], os.environ["TWILIO_AUTH
 
 
 def generate_prompt(mentor_type, message, previous_interaction_count):
-  if previous_interaction_count not in [1, 2]:
-    raise ValueError(f"Invalid previous_interaction_count={previous_interaction_count} to call generate_prompt")
 
   if mentor_type == "local_mentor":
     if previous_interaction_count == 1:
@@ -179,76 +177,72 @@ def whatsapp_reply():
     previous_interaction_records = interactions.query_interactions(phone)
     previous_interaction_count = len(previous_interaction_records) 
 
-    if previous_interaction_count < 3:
-      # Get mentor type
-      if previous_interaction_count == 0:
-        mentor_type = random.choice(["local mentor", "refugee mentor", "AI Mentor"])
-      else:
-        mentor_type = previous_interaction_records[0]["mentor_type"]
-
-      # Send either a simple greeting, main advice, or followup advice depending on the previous_interaction_count
-      if previous_interaction_count == 0:
-        message_to_send = "Hello there, please tell me your business idea, and I will provide adivce"
-      else:
-        # Define prompt
-        prompt = generate_prompt(mentor_type, received_message, previous_interaction_count)
-        app.logger.error(f"prompt={prompt}")
-
-        # Generate response
-        message_to_send = get_chat_response(prompt, received_message)
-        if previous_interaction_count == 1: 
-          message_to_send += "Please feel free to ask one more follow up question."
-        else:
-          message_to_send += "Thank you for using this chatbot service! Our interaction is now complete."
-        app.logger.error(f"message_to_send={message_to_send}")
-
-      # Send whatsapp return message in chunks
-      i = 0
-      chunk_sz = int(os.environ["CHUNK_SZ"])
-      message_failure_flag = False
-      while i < len(message_to_send):
-        # Increment by chunk sz and search for nearest end of a sentence
-        j = min(i + chunk_sz, len(message_to_send))
-        if j < len(message_to_send):
-          while message_to_send[j] not in [".", "?", "!"] and j < len(message_to_send):
-              j += 1
-          j += 1
-
-        # Define the chunk as section from i to j
-        chunk = message_to_send[i:j]
-
-        # Redefine i
-        i = j
-
-        # Send the message
-        twilio_message = twilio_client.messages.create(
-          to=phone,
-          from_=os.environ["SERVER_PHONE"],
-          body=chunk
-        )
-
-        # Await for a little time until some sort of delivery
-        sid = twilio_message.sid
-        k = 1
-        while k <= int(os.environ["K_MAX"]) and twilio_message.status not in ["delivery_unknown", "delivered", "undelivered", "failed", "read"]:
-            time.sleep(k)
-            twilio_message = twilio_client.messages(sid).fetch()
-            k += 1
-
-        # If message was not successfully sent, delivered, or read; then return error
-        if twilio_message.status not in ["sent", "delivered", "read"]:
-          server_msg = f"devliery of response message sid={sid} failed for {timestamp} incoming message from {phone}"
-          message_failure_flag = True
-          break
-        
-
-      if not message_failure_flag:
-        server_msg = "success"
-        # Write record to dynamodb
-        interactions.add_interaction(phone, timestamp, received_message, message_to_send, mentor_type, name)
-
+    # Get mentor type
+    if previous_interaction_count == 0:
+      mentor_type = random.choice(["local mentor", "refugee mentor", "AI Mentor"])
     else:
-      server_msg = "exceeded maximum number of interactions"
+      mentor_type = previous_interaction_records[0]["mentor_type"]
+
+    # Send either a simple greeting, main advice, or followup advice depending on the previous_interaction_count
+    if previous_interaction_count == 0:
+      message_to_send = "Hello there, please tell me your business idea, and I will provide adivce"
+    else:
+      # Define prompt
+      prompt = generate_prompt(mentor_type, received_message, previous_interaction_count)
+      app.logger.error(f"prompt={prompt}")
+
+      # Generate response
+      message_to_send = get_chat_response(prompt, received_message)
+      if previous_interaction_count == 1: 
+        message_to_send += "Please feel free to ask one more follow up question."
+      else:
+        message_to_send += "Please feel free to ask more questions. Just make sure to re-state your business idea."
+      app.logger.error(f"message_to_send={message_to_send}")
+
+    # Send whatsapp return message in chunks
+    i = 0
+    chunk_sz = int(os.environ["CHUNK_SZ"])
+    message_failure_flag = False
+    while i < len(message_to_send):
+      # Increment by chunk sz and search for nearest end of a sentence
+      j = min(i + chunk_sz, len(message_to_send))
+      if j < len(message_to_send):
+        while message_to_send[j] not in [".", "?", "!"] and j < len(message_to_send):
+            j += 1
+        j += 1
+
+      # Define the chunk as section from i to j
+      chunk = message_to_send[i:j]
+
+      # Redefine i
+      i = j
+
+      # Send the message
+      twilio_message = twilio_client.messages.create(
+        to=phone,
+        from_=os.environ["SERVER_PHONE"],
+        body=chunk
+      )
+
+      # Await for a little time until some sort of delivery
+      sid = twilio_message.sid
+      k = 1
+      while k <= int(os.environ["K_MAX"]) and twilio_message.status not in ["delivery_unknown", "delivered", "undelivered", "failed", "read"]:
+          time.sleep(k)
+          twilio_message = twilio_client.messages(sid).fetch()
+          k += 1
+
+      # If message was not successfully sent, delivered, or read; then return error
+      if twilio_message.status not in ["sent", "delivered", "read"]:
+        server_msg = f"devliery of response message sid={sid} failed for {timestamp} incoming message from {phone}"
+        message_failure_flag = True
+        break
+      
+
+    if not message_failure_flag:
+      server_msg = "success"
+      # Write record to dynamodb
+      interactions.add_interaction(phone, timestamp, received_message, message_to_send, mentor_type, name)
 
   else:
     name = ""
