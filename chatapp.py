@@ -36,7 +36,7 @@ class ChatApp:
                 messages=self.messages
             )
             self.messages.append({"role": "assistant", "content": response["choices"][0]["message"].content})
-            return response["choices"][0]["message"]
+            return response["choices"][0]["message"].content
         except openai.error.InvalidRequestError as e:
             print(f"InvalidRequestError: {e}")
             return "There was an error with your request. Please check your input and try again."
