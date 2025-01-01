@@ -98,13 +98,9 @@ def whatsapp_reply():
           "You are continuing a detailed mentoring conversation with the user. \n"
           "Your goal is to answer the question by providing specific, actionable, relevant advice to the questions/concerns pointed out. \n")
         
-        #get response from the chatbot
-        message_to_send = chatapp.chat(received_message)
-      
-      if previous_interaction_count == 1: 
-        message_to_send += "Please feel free to ask one more follow up question."
-      else:
-        message_to_send += "Please feel free to ask more questions. Just make sure to re-state your business idea."
+      #get response from the chatbot
+      message_to_send = chatapp.chat(received_message)
+      message_to_send += 'Please feel free to ask a follow up question.'
       app.logger.error(f"message_to_send={message_to_send}")
 
     # Send whatsapp return message in chunks
